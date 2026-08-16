@@ -1,0 +1,2191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loveria — Read, Write, and Connect</title>
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: rgba(255, 255, 255, 0.05);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #8b5cf6;
+      --accent-2: #ec4899;
+      --border: rgba(255, 255, 255, 0.09);
+      --danger: #dc2626;
+      --blue-tick: #38bdf8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: linear-gradient(180deg, #0f172a, #111827);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      font-weight: 600;
+    }
+
+    .secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .danger {
+      background: var(--danger);
+      color: white;
+      font-weight: 600;
+    }
+
+    .link-button {
+      background: none;
+      border: none;
+      padding: 0;
+      color: #c4b5fd;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .hidden { display: none !important; }
+    .muted { color: var(--muted); }
+    .muted-small { color: var(--muted); font-size: 13px; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 24px;
+      backdrop-filter: blur(12px);
+      background: rgba(15, 23, 42, 0.72);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
+
+    .logo {
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      font-size: 20px;
+      background: linear-gradient(135deg, #c4b5fd, #f9a8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .nav button.active {
+      outline: 2px solid rgba(255, 255, 255, 0.35);
+    }
+
+    #authButton {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero {
+      max-width: 920px;
+      margin: 56px auto 24px;
+      padding: 0 24px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 58px);
+      margin: 0 0 12px;
+      line-height: 1.08;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 18px;
+      margin: 0 auto 24px;
+      max-width: 700px;
+      line-height: 1.6;
+    }
+
+    .controls {
+      width: min(900px, calc(100% - 48px));
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .search-input, input, textarea, select {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font: inherit;
+    }
+
+    textarea { resize: vertical; }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-button.active {
+      outline: 2px solid rgba(255, 255, 255, 0.35);
+    }
+
+    .section {
+      max-width: 1100px;
+      margin: 32px auto 80px;
+      padding: 0 24px;
+    }
+
+    .section h2 { margin: 0 0 16px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 230px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .card h3 { margin: 0; font-size: 20px; }
+
+    .card .author { color: #c7d2fe; font-size: 14px; }
+
+    .card .description {
+      color: var(--muted);
+      line-height: 1.5;
+      overflow: auto;
+    }
+
+    .card .meta {
+      margin-top: auto;
+      color: #7c8aa0;
+      font-size: 12px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .empty {
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      padding: 28px;
+      text-align: center;
+    }
+
+    dialog {
+      width: min(880px, calc(100vw - 32px));
+      max-height: 90vh;
+      overflow: auto;
+      border: 0;
+      border-radius: 20px;
+      padding: 0;
+      background: #0b1220;
+      color: var(--text);
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+    }
+
+    .dialog-content {
+      padding: 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .dialog-content h3, form h3 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    form {
+      padding: 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: #cbd5e1;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 0 24px 24px;
+    }
+
+    .auth-demo-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      font-weight: 800;
+      vertical-align: middle;
+      flex: 0 0 auto;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar.small { width: 28px; height: 28px; font-size: 14px; }
+    .avatar.large { width: 76px; height: 76px; font-size: 30px; }
+
+    .tick {
+      color: var(--blue-tick);
+      font-weight: 900;
+      margin-left: 4px;
+    }
+
+    .profile-header {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .profile-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .profile-title h3 { margin: 0; font-size: 28px; }
+
+    .profile-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      color: var(--muted);
+    }
+
+    .profile-list {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .novel-pill {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      margin: 0 8px 8px 0;
+    }
+
+    .inbox-layout {
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      gap: 14px;
+      min-height: 420px;
+    }
+
+    @media (max-width: 760px) {
+      .inbox-layout { grid-template-columns: 1fr; }
+    }
+
+    .inbox-list {
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      padding-right: 12px;
+    }
+
+    .conversation {
+      width: 100%;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .conversation.active {
+      outline: 2px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .conversation-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .conversation-preview {
+      color: var(--muted);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chat-thread {
+      height: 300px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .message.me {
+      align-self: flex-end;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.92), rgba(236, 72, 153, 0.92));
+      color: white;
+    }
+
+    .message.them {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .chat-input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .guide-list {
+      margin: 0;
+      padding-left: 20px;
+      display: grid;
+      gap: 10px;
+      line-height: 1.6;
+    }
+
+    .notice {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      color: #bae6fd;
+      border-radius: 14px;
+      padding: 12px;
+      line-height: 1.6;
+    }
+
+    /* Chapter writing/reading */
+    #chapterContent {
+      min-height: 320px;
+      line-height: 1.7;
+    }
+
+    .chapter-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chapter-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chapter-item button {
+      flex-shrink: 0;
+    }
+
+    .reader-content {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      line-height: 1.9;
+      font-size: 17px;
+      white-space: pre-wrap;
+      max-height: 60vh;
+      overflow: auto;
+    }
+
+    .reader-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="logo">💜 Loveria</div>
+
+    <nav class="nav">
+      <button class="secondary" data-route="reader">Reader Portal</button>
+      <button class="secondary" data-route="writer">Writer Studio</button>
+      <button class="secondary" id="open-help">Help</button>
+      <button class="secondary" id="musicToggle" aria-pressed="false">🎵 Music: Off</button>
+      <button class="secondary" id="authButton">Log in</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- READER PORTAL -->
+    <section id="reader-view">
+      <div class="hero">
+        <h1>Welcome to Loveria</h1>
+        <p>
+          Discover novels, read chapter by chapter, like your favorite stories,
+          follow writers, message readers, and build your profile.
+        </p>
+
+        <div class="controls">
+          <input id="searchInput" placeholder="Search novels by title, author, or description" />
+
+          <div class="filter-row">
+            <button class="secondary filter-button active" data-filter="all">All</button>
+            <button class="secondary filter-button" data-filter="favorites">Favorites</button>
+            <button class="secondary filter-button" data-filter="liked">Liked</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="section">
+        <h2>Novels</h2>
+        <div id="readerNovelList" class="grid"></div>
+        <p id="readerEmpty" class="empty">No novels found.</p>
+      </section>
+    </section>
+
+    <!-- WRITER STUDIO -->
+    <section id="writer-view" class="hidden">
+      <div class="hero">
+        <h1>Writer Studio</h1>
+        <p>
+          Create your novels, write chapters, and manage your works.
+          Your chapters will appear for readers in the Reader Portal.
+        </p>
+
+        <div class="filter-row">
+          <button class="primary" id="createNovelButton">Create novel</button>
+          <button class="secondary" id="writeNowButton">✍️ Write now</button>
+        </div>
+      </div>
+
+      <section class="section">
+        <h2>Your novels</h2>
+        <div id="writerNovelList" class="grid"></div>
+        <p id="writerEmpty" class="empty">Log in to create and manage your novels.</p>
+      </section>
+    </section>
+  </main>
+
+  <!-- HELP / GUIDE -->
+  <dialog id="helpDialog">
+    <div class="dialog-content">
+      <h3>Step-by-step guide</h3>
+
+      <div class="notice">
+        This is a local demo prototype. Real accounts, messages, and profile pictures
+        will need a backend/database when we build the full production app.
+      </div>
+
+      <ol class="guide-list">
+        <li><strong>Create an account</strong> using an email address or phone number.</li>
+        <li><strong>Open your profile</strong> by clicking your name in the top-right.</li>
+        <li><strong>Add a profile picture</strong>, edit your name, and write a bio.</li>
+        <li><strong>Get a blue tick</strong> in your profile for demo verification.</li>
+        <li><strong>Create a novel</strong> in Writer Studio (give it a title and description).</li>
+        <li><strong>Click "✍️ Write now"</strong> to write chapters for your novel.</li>
+        <li><strong>Like novels</strong> and <strong>add favorites</strong> in the Reader Portal.</li>
+        <li><strong>Read novels</strong> chapter by chapter by opening a novel and clicking a chapter.</li>
+        <li><strong>Follow people</strong> by opening their profile and pressing Follow.</li>
+        <li><strong>Message people</strong> by opening their profile and pressing Message.</li>
+        <li><strong>Share profiles</strong> using the Share button on any profile.</li>
+        <li><strong>Block or unblock users</strong> from their profile if needed.</li>
+        <li><strong>Toggle music</strong> with the Music button for a calm reading atmosphere.</li>
+      </ol>
+
+      <p class="muted">
+        Demo accounts:
+        <br />
+        official@loveria.app / loveria123
+        <br />
+        aria@loveria.app / loveria123
+      </p>
+    </div>
+
+    <div class="dialog-actions">
+      <button class="primary" id="helpClose">Start exploring</button>
+    </div>
+  </dialog>
+
+  <!-- AUTH -->
+  <dialog id="authDialog">
+    <form id="authForm">
+      <h3 id="authTitle">Log in to Loveria</h3>
+
+      <div id="authError" class="muted"></div>
+
+      <label id="authNameWrap" class="hidden">
+        Name
+        <input id="authName" maxlength="60" placeholder="Your display name" />
+      </label>
+
+      <label>
+        Email or phone number
+        <input id="authIdentifier" placeholder="you@example.com or 0712345678" />
+      </label>
+
+      <label>
+        Password
+        <input id="authPassword" type="password" placeholder="At least 6 characters" />
+      </label>
+
+      <div class="auth-demo-box">
+        Demo login:
+        <br />
+        official@loveria.app / loveria123
+        <br />
+        aria@loveria.app / loveria123
+        <br /><br />
+
+        <button type="button" class="secondary demo-fill" data-identifier="official@loveria.app" data-password="loveria123">
+          Fill Official demo
+        </button>
+
+        <button type="button" class="secondary demo-fill" data-identifier="aria@loveria.app" data-password="loveria123">
+          Fill Aria demo
+        </button>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary" data-close="authDialog">Cancel</button>
+        <button type="button" class="secondary" id="authSwitch">Need an account? Sign up</button>
+        <button type="submit" class="primary" id="authSubmit">Log in</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- CREATE NOVEL -->
+  <dialog id="createDialog">
+    <form id="createForm">
+      <h3>Create a novel</h3>
+
+      <label>
+        Title
+        <input id="novelTitle" required maxlength="80" placeholder="My Loveria Novel" />
+      </label>
+
+      <label>
+        Description
+        <textarea
+          id="novelDescription"
+          rows="5"
+          maxlength="500"
+          placeholder="What is your novel about?"
+        ></textarea>
+      </label>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary" data-close="createDialog">Cancel</button>
+        <button type="submit" class="primary">Create</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- WRITE CHAPTER -->
+  <dialog id="writeDialog">
+    <div class="dialog-content">
+      <h3>✍️ Write your chapter</h3>
+
+      <div id="writeStatus" class="muted"></div>
+
+      <label>
+        Choose your novel
+        <select id="writeNovelSelect"></select>
+      </label>
+
+      <label>
+        Chapter title
+        <input id="chapterTitle" maxlength="120" placeholder="Chapter 1 — The Beginning" />
+      </label>
+
+      <label>
+        Write your chapter
+        <textarea
+          id="chapterContent"
+          rows="14"
+          placeholder="Start writing your story here...
+
+Let your words flow. Take your time.
+You can save drafts and come back later."
+        ></textarea>
+      </label>
+
+      <div id="existingChapters" class="profile-list"></div>
+    </div>
+
+    <div class="dialog-actions">
+      <button class="secondary" data-close="writeDialog">Close</button>
+      <button class="primary" id="saveChapterButton">Save chapter</button>
+    </div>
+  </dialog>
+
+  <!-- PROFILE -->
+  <dialog id="profileDialog">
+    <div id="profileContent" class="dialog-content"></div>
+
+    <div class="dialog-actions">
+      <button class="secondary" data-close="profileDialog">Close</button>
+    </div>
+  </dialog>
+
+  <!-- INBOX -->
+  <dialog id="inboxDialog">
+    <div id="inboxContent" class="dialog-content"></div>
+
+    <div class="dialog-actions">
+      <button class="secondary" data-close="inboxDialog">Close</button>
+    </div>
+  </dialog>
+
+  <!-- NOVEL DETAILS -->
+  <dialog id="novelDialog">
+    <div id="novelContent" class="dialog-content"></div>
+
+    <div class="dialog-actions">
+      <button class="secondary" data-close="novelDialog">Close</button>
+    </div>
+  </dialog>
+
+  <!-- READ CHAPTER -->
+  <dialog id="readDialog">
+    <div id="readContent" class="dialog-content"></div>
+
+    <div class="dialog-actions">
+      <button class="secondary" data-close="readDialog">Close</button>
+    </div>
+  </dialog>
+
+  <script>
+    const KEYS = {
+      users: "loveria_users",
+      session: "loveria_session",
+      novels: "loveria_novels",
+      messages: "loveria_messages"
+    };
+
+    const db = {
+      get(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch { return fallback; }
+      },
+      set(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+    };
+
+    let currentFilter = "all";
+    let currentNovelId = null;
+    let currentChapterIndex = 0;
+    let profileUserId = null;
+    let activeConversationUserId = null;
+    let authMode = "login";
+
+    const readerView = document.getElementById("reader-view");
+    const writerView = document.getElementById("writer-view");
+
+    const searchInput = document.getElementById("searchInput");
+    const readerNovelList = document.getElementById("readerNovelList");
+    const writerNovelList = document.getElementById("writerNovelList");
+    const readerEmpty = document.getElementById("readerEmpty");
+    const writerEmpty = document.getElementById("writerEmpty");
+
+    const authButton = document.getElementById("authButton");
+
+    const authDialog = document.getElementById("authDialog");
+    const authForm = document.getElementById("authForm");
+    const authTitle = document.getElementById("authTitle");
+    const authNameWrap = document.getElementById("authNameWrap");
+    const authName = document.getElementById("authName");
+    const authIdentifier = document.getElementById("authIdentifier");
+    const authPassword = document.getElementById("authPassword");
+    const authError = document.getElementById("authError");
+    const authSwitch = document.getElementById("authSwitch");
+    const authSubmit = document.getElementById("authSubmit");
+
+    const createDialog = document.getElementById("createDialog");
+    const createForm = document.getElementById("createForm");
+    const createNovelButton = document.getElementById("createNovelButton");
+
+    const writeDialog = document.getElementById("writeDialog");
+    const writeNovelSelect = document.getElementById("writeNovelSelect");
+    const chapterTitle = document.getElementById("chapterTitle");
+    const chapterContent = document.getElementById("chapterContent");
+    const existingChapters = document.getElementById("existingChapters");
+    const writeStatus = document.getElementById("writeStatus");
+    const saveChapterButton = document.getElementById("saveChapterButton");
+    const writeNowButton = document.getElementById("writeNowButton");
+
+    const profileDialog = document.getElementById("profileDialog");
+    const profileContent = document.getElementById("profileContent");
+
+    const inboxDialog = document.getElementById("inboxDialog");
+    const inboxContent = document.getElementById("inboxContent");
+
+    const novelDialog = document.getElementById("novelDialog");
+    const novelContent = document.getElementById("novelContent");
+
+    const readDialog = document.getElementById("readDialog");
+    const readContent = document.getElementById("readContent");
+
+    const helpDialog = document.getElementById("helpDialog");
+
+    function uid() {
+      return crypto.randomUUID?.() ?? "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function formatDate(isoString) {
+      return new Date(isoString).toLocaleDateString(undefined, {
+        year: "numeric", month: "short", day: "numeric"
+      });
+    }
+
+    function normalizeIdentifier(value) {
+      value = String(value || "").trim();
+      if (value.includes("@")) return value.toLowerCase();
+      return value.replace(/[^\d]/g, "");
+    }
+
+    function isValidIdentifier(value) {
+      const normalized = normalizeIdentifier(value);
+      if (normalized.includes("@")) return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
+      return /^\d{7,15}$/.test(normalized);
+    }
+
+    function seedData() {
+      const now = new Date().toISOString();
+
+      if (!localStorage.getItem(KEYS.users)) {
+        const users = [
+          {
+            id: "u-official",
+            identifier: "official@loveria.app",
+            name: "Loveria Official",
+            password: "loveria123",
+            avatar: "",
+            bio: "Official Loveria account. Welcome to a warm world of novels.",
+            verified: true,
+            followers: ["u-aria"],
+            following: ["u-aria"],
+            blocked: [],
+            favorites: ["n-2"],
+            createdAt: now
+          },
+          {
+            id: "u-aria",
+            identifier: "aria@loveria.app",
+            name: "Aria",
+            password: "loveria123",
+            avatar: "",
+            bio: "I write soft fantasy, romance, and emotional stories.",
+            verified: false,
+            followers: ["u-official"],
+            following: ["u-official"],
+            blocked: [],
+            favorites: ["n-1"],
+            createdAt: now
+          },
+          {
+            id: "u-kai",
+            identifier: "kai@loveria.app",
+            name: "Kai",
+            password: "loveria123",
+            avatar: "",
+            bio: "Reader, dreamer, night writer.",
+            verified: false,
+            followers: [],
+            following: [],
+            blocked: [],
+            favorites: [],
+            createdAt: now
+          }
+        ];
+        db.set(KEYS.users, users);
+      }
+
+      if (!localStorage.getItem(KEYS.novels)) {
+        const novels = [
+          {
+            id: "n-1",
+            title: "The Cooling Moon",
+            authorId: "u-aria",
+            authorName: "Aria",
+            description: "A gentle fantasy about a moon spirit who heals broken hearts.",
+            likes: ["u-official", "u-kai"],
+            chapters: [
+              {
+                id: "c-1-1",
+                title: "Chapter 1 — The Silver Lake",
+                content: "The moon spirit walked beside the silver lake, her footsteps leaving no mark on the soft earth.\n\nShe had waited a hundred years for this night.\n\nThe wind carried whispers of forgotten songs, and somewhere far away, a broken heart was ready to be healed.",
+                createdAt: now
+              },
+              {
+                id: "c-1-2",
+                title: "Chapter 2 — The Stranger",
+                content: "A stranger appeared beneath the old willow tree.\n\nHe did not speak. He only looked at her with eyes that held too many memories.\n\n\"I know you,\" she whispered.\n\n\"You always have,\" he replied.",
+                createdAt: now
+              }
+            ],
+            createdAt: now
+          },
+          {
+            id: "n-2",
+            title: "Ocean of Stars",
+            authorId: "u-official",
+            authorName: "Loveria Official",
+            description: "An official Loveria sample novel about a shining sea of dreams.",
+            likes: ["u-aria"],
+            chapters: [
+              {
+                id: "c-2-1",
+                title: "Chapter 1 — The Dreamer",
+                content: "There was a girl who sailed on an ocean made entirely of stars.\n\nEvery night, she would dip her hand into the water and pull out a single wish.\n\nTonight, she wished for company.",
+                createdAt: now
+              }
+            ],
+            createdAt: now
+          },
+          {
+            id: "n-3",
+            title: "Midnight Letters",
+            authorId: "u-kai",
+            authorName: "Kai",
+            description: "Secret letters exchanged between two strangers at midnight.",
+            likes: [],
+            chapters: [],
+            createdAt: now
+          }
+        ];
+        db.set(KEYS.novels, novels);
+      }
+
+      if (!localStorage.getItem(KEYS.messages)) {
+        const messages = [
+          {
+            id: "m-1",
+            from: "u-official",
+            to: "u-aria",
+            text: "Welcome to Loveria! You can message writers and readers here.",
+            createdAt: now
+          }
+        ];
+        db.set(KEYS.messages, messages);
+      }
+    }
+
+    function getUsers() { return db.get(KEYS.users, []); }
+    function saveUsers(users) { db.set(KEYS.users, users); }
+    function getNovels() { return db.get(KEYS.novels, []); }
+    function saveNovels(novels) { db.set(KEYS.novels, novels); }
+    function getMessages() { return db.get(KEYS.messages, []); }
+    function saveMessages(messages) { db.set(KEYS.messages, messages); }
+
+    function getUserById(id) { return getUsers().find((u) => u.id === id) || null; }
+    function getNovelById(id) { return getNovels().find((n) => n.id === id) || null; }
+
+    function getCurrentUser() {
+      const sessionId = db.get(KEYS.session, null);
+      if (!sessionId) return null;
+      return getUserById(sessionId);
+    }
+
+    function setSession(userId) { db.set(KEYS.session, userId); }
+    function logout() { localStorage.removeItem(KEYS.session); }
+
+    function updateUser(id, changes) {
+      const users = getUsers();
+      const user = users.find((u) => u.id === id);
+      if (!user) return;
+      Object.assign(user, changes);
+      saveUsers(users);
+    }
+
+    function requireLogin() {
+      const current = getCurrentUser();
+      if (current) return true;
+      openAuth("login");
+      return false;
+    }
+
+    function blueTickHtml(user) {
+      return user?.verified ? `<span class="tick" title="Verified">✔</span>` : "";
+    }
+
+    function avatarHtml(user, sizeClass = "small") {
+      if (!user) return "";
+      const initial = (user.name || "?").charAt(0).toUpperCase();
+      if (user.avatar) {
+        return `<span class="avatar ${sizeClass}"><img src="${escapeHtml(user.avatar)}" alt="${escapeHtml(user.name)} avatar" /></span>`;
+      }
+      return `<span class="avatar ${sizeClass}">${escapeHtml(initial)}</span>`;
+    }
+
+    function renderAuthButton() {
+      const current = getCurrentUser();
+      if (!current) {
+        authButton.textContent = "Log in";
+        return;
+      }
+      authButton.innerHTML = `${avatarHtml(current, "small")} <span>${escapeHtml(current.name)}</span>`;
+    }
+
+    function novelCard(novel, mode) {
+      const users = getUsers();
+      const current = getCurrentUser();
+      const author = users.find((u) => u.id === novel.authorId);
+      const authorName = author?.name || novel.authorName || "Unknown";
+      const liked = current && novel.likes.includes(current.id);
+      const favorited = current && current.favorites.includes(novel.id);
+      const chapterCount = (novel.chapters || []).length;
+
+      return `
+        <article class="card">
+          <h3>${escapeHtml(novel.title)}</h3>
+
+          <div class="author">
+            by
+            <button class="link-button" data-action="open-profile" data-id="${escapeHtml(author?.id || "")}">
+              ${escapeHtml(authorName)} ${blueTickHtml(author)}
+            </button>
+          </div>
+
+          <div class="description">${escapeHtml(novel.description || "No description yet.")}</div>
+
+          <div class="meta">
+            ${chapterCount} chapter${chapterCount === 1 ? "" : "s"} · Created ${formatDate(novel.createdAt)}
+          </div>
+
+          <div class="card-actions">
+            ${mode === "writer"
+              ? `
+                <button class="secondary" data-action="details" data-id="${escapeHtml(novel.id)}">Details</button>
+                <button class="secondary" data-action="write-novel" data-id="${escapeHtml(novel.id)}">✍️ Write</button>
+                <button class="danger" data-action="delete" data-id="${escapeHtml(novel.id)}">Delete</button>
+              `
+              : `
+                <button class="secondary" data-action="like" data-id="${escapeHtml(novel.id)}">
+                  ${liked ? "❤️ Liked" : "🤍 Like"} · ${novel.likes.length}
+                </button>
+                <button class="secondary" data-action="favorite" data-id="${escapeHtml(novel.id)}">
+                  ${favorited ? "⭐ Favorited" : "☆ Favorite"}
+                </button>
+                <button class="secondary" data-action="details" data-id="${escapeHtml(novel.id)}">Read</button>
+              `
+            }
+          </div>
+        </article>
+      `;
+    }
+
+    function renderReader() {
+      const current = getCurrentUser();
+      const query = searchInput.value.trim().toLowerCase();
+      let novels = getNovels().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      if (currentFilter === "favorites") {
+        novels = current ? novels.filter((n) => current.favorites.includes(n.id)) : [];
+      }
+      if (currentFilter === "liked") {
+        novels = current ? novels.filter((n) => n.likes.includes(current.id)) : [];
+      }
+      if (query) {
+        novels = novels.filter((novel) => {
+          const author = getUserById(novel.authorId);
+          const authorName = author?.name || novel.authorName || "";
+          return (
+            (novel.title || "").toLowerCase().includes(query) ||
+            authorName.toLowerCase().includes(query) ||
+            (novel.description || "").toLowerCase().includes(query)
+          );
+        });
+      }
+
+      readerEmpty.style.display = novels.length ? "none" : "block";
+
+      if (!novels.length) {
+        if (!current && currentFilter !== "all") {
+          readerEmpty.textContent = "Log in to see your favorites and liked novels.";
+        } else if (currentFilter === "favorites") {
+          readerEmpty.textContent = "No favorite novels yet. Tap ☆ Favorite on a novel to save it here.";
+        } else if (currentFilter === "liked") {
+          readerEmpty.textContent = "No liked novels yet. Tap 🤍 Like on a novel to save it here.";
+        } else {
+          readerEmpty.textContent = "No novels found.";
+        }
+      }
+
+      readerNovelList.innerHTML = novels.map((n) => novelCard(n, "reader")).join("");
+    }
+
+    function renderWriter() {
+      const current = getCurrentUser();
+      if (!current) {
+        writerEmpty.style.display = "block";
+        writerEmpty.textContent = "Log in to create and manage your novels.";
+        writerNovelList.innerHTML = "";
+        return;
+      }
+      const novels = getNovels().filter((n) => n.authorId === current.id);
+      writerEmpty.style.display = novels.length ? "none" : "block";
+      writerEmpty.textContent = "No novels yet. Create your first Loveria novel.";
+      writerNovelList.innerHTML = novels.map((n) => novelCard(n, "writer")).join("");
+    }
+
+    function renderAll() {
+      renderAuthButton();
+      renderReader();
+      renderWriter();
+      if (profileDialog.open) renderProfile();
+      if (inboxDialog.open) renderInbox();
+      if (novelDialog.open) renderNovel();
+    }
+
+    function setRoute(route) {
+      const normalized = route === "writer" ? "writer" : "reader";
+      readerView.classList.toggle("hidden", normalized !== "reader");
+      writerView.classList.toggle("hidden", normalized !== "writer");
+      document.querySelectorAll("[data-route]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.route === normalized);
+      });
+    }
+
+    function clearHash() {
+      try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+    }
+
+    function handleHash() {
+      const hash = location.hash;
+      if (hash.startsWith("#profile/")) {
+        openProfile(hash.replace("#profile/", ""));
+        return;
+      }
+      if (hash.startsWith("#novel/")) {
+        openNovel(hash.replace("#novel/", ""));
+        return;
+      }
+      if (profileDialog.open) profileDialog.close();
+      if (novelDialog.open) novelDialog.close();
+      setRoute(hash === "#writer" ? "writer" : "reader");
+    }
+
+    function openAuth(mode = "login") {
+      setAuthMode(mode);
+      authDialog.showModal();
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      authNameWrap.classList.toggle("hidden", mode === "login");
+      authTitle.textContent = mode === "login" ? "Log in to Loveria" : "Create your Loveria account";
+      authSubmit.textContent = mode === "login" ? "Log in" : "Sign up";
+      authSwitch.textContent = mode === "login" ? "Need an account? Sign up" : "Already have an account? Log in";
+      authError.textContent = "";
+    }
+
+    function toggleLike(novelId) {
+      if (!requireLogin()) return;
+      const current = getCurrentUser();
+      const novels = getNovels();
+      const novel = novels.find((n) => n.id === novelId);
+      if (!novel) return;
+      if (novel.likes.includes(current.id)) {
+        novel.likes = novel.likes.filter((id) => id !== current.id);
+      } else {
+        novel.likes.push(current.id);
+      }
+      saveNovels(novels);
+      renderAll();
+    }
+
+    function toggleFavorite(novelId) {
+      if (!requireLogin()) return;
+      const current = getCurrentUser();
+      const users = getUsers();
+      const user = users.find((u) => u.id === current.id);
+      if (!user) return;
+      if (user.favorites.includes(novelId)) {
+        user.favorites = user.favorites.filter((id) => id !== novelId);
+      } else {
+        user.favorites.push(novelId);
+      }
+      saveUsers(users);
+      renderAll();
+    }
+
+    function deleteNovel(novelId) {
+      if (!requireLogin()) return;
+      const current = getCurrentUser();
+      const novels = getNovels();
+      const novel = novels.find((n) => n.id === novelId);
+      if (!novel) return;
+      if (novel.authorId !== current.id) {
+        alert("You can only delete your own novels.");
+        return;
+      }
+      if (!confirm(`Delete "${novel.title}"?`)) return;
+      saveNovels(novels.filter((n) => n.id !== novelId));
+      renderAll();
+    }
+
+    function openProfile(userId) {
+      if (!userId) return;
+      profileUserId = userId;
+      renderProfile();
+      try { history.replaceState(null, "", `#profile/${userId}`); } catch {}
+      profileDialog.showModal();
+    }
+
+    function renderProfile() {
+      const user = getUserById(profileUserId);
+      if (!user) {
+        profileContent.innerHTML = `<p class="muted">Profile not found.</p>`;
+        return;
+      }
+      const current = getCurrentUser();
+      const isSelf = current && current.id === user.id;
+      const blockedByMe = current && current.blocked.includes(user.id);
+      const blockedByThem = user.blocked.includes(current?.id || "");
+      const blocked = blockedByMe || blockedByThem;
+      const following = current && current.following.includes(user.id);
+
+      const novels = getNovels();
+      const createdNovels = novels.filter((n) => n.authorId === user.id);
+      const favoriteNovels = novels.filter((n) => user.favorites.includes(n.id));
+
+      profileContent.innerHTML = `
+        <div class="profile-header">
+          ${avatarHtml(user, "large")}
+          <div style="flex:1; min-width:240px;">
+            <div class="profile-title">
+              <h3>${escapeHtml(user.name)}</h3>
+              ${blueTickHtml(user)}
+            </div>
+            <div class="muted">${escapeHtml(user.identifier)}</div>
+            <p>${escapeHtml(user.bio || "No bio yet.")}</p>
+            <div class="profile-stats">
+              <span><strong>${user.followers.length}</strong> followers</span>
+              <span><strong>${user.following.length}</strong> following</span>
+              <span><strong>${user.favorites.length}</strong> favorites</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dialog-actions" style="padding-left:0; padding-right:0;">
+          ${isSelf
+            ? `
+              <label class="secondary">
+                Upload picture
+                <input id="profileAvatarInput" type="file" accept="image/*" hidden />
+              </label>
+              <button class="secondary" data-profile-action="verify" ${user.verified ? "disabled" : ""}>
+                ${user.verified ? "Blue tick active" : "Get blue tick"}
+              </button>
+              <button class="secondary" data-profile-action="share">Share profile</button>
+              <button class="danger" data-profile-action="logout">Log out</button>
+            `
+            : `
+              <button class="primary" data-profile-action="follow" ${blocked ? "disabled" : ""}>
+                ${following ? "Unfollow" : "Follow"}
+              </button>
+              <button class="secondary" data-profile-action="message" ${blocked ? "disabled" : ""}>Message</button>
+              <button class="secondary" data-profile-action="share">Share profile</button>
+              <button class="danger" data-profile-action="block">
+                ${blockedByMe ? "Unblock" : "Block"}
+              </button>
+            `
+          }
+        </div>
+
+        ${isSelf
+          ? `
+            <div class="profile-list">
+              <h3>Edit profile</h3>
+              <br />
+              <label>
+                Name
+                <input id="profileName" value="${escapeHtml(user.name)}" maxlength="60" />
+              </label>
+              <br />
+              <label>
+                Bio
+                <textarea id="profileBio" rows="3" maxlength="200">${escapeHtml(user.bio)}</textarea>
+              </label>
+              <br />
+              <button class="primary" data-profile-action="save">Save profile</button>
+            </div>
+          `
+          : ""
+        }
+
+        ${blocked
+          ? `<div class="notice">Messaging and following are unavailable because a block exists between these profiles.</div>`
+          : ""
+        }
+
+        <div class="profile-list">
+          <h3>Novels (${createdNovels.length})</h3>
+          <br />
+          ${createdNovels.length
+            ? createdNovels.map((n) => `
+                <button class="novel-pill" data-novel-action="open-novel" data-id="${escapeHtml(n.id)}">
+                  ${escapeHtml(n.title)} · ${(n.chapters || []).length} ch.
+                </button>
+              `).join("")
+            : `<p class="muted">No novels yet.</p>`
+          }
+        </div>
+
+        <div class="profile-list">
+          <h3>Favorites</h3>
+          <br />
+          ${favoriteNovels.length
+            ? favoriteNovels.map((n) => `
+                <button class="novel-pill" data-novel-action="open-novel" data-id="${escapeHtml(n.id)}">
+                  ${escapeHtml(n.title)}
+                </button>
+              `).join("")
+            : `<p class="muted">No favorite novels yet.</p>`
+          }
+        </div>
+      `;
+    }
+
+    function handleAvatarUpload(input) {
+      const current = getCurrentUser();
+      if (!current || current.id !== profileUserId) return;
+      const file = input.files?.[0];
+      if (!file) return;
+      if (file.size > 2_000_000) {
+        alert("Please choose an image smaller than 2MB for this demo.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        updateUser(current.id, { avatar: String(reader.result) });
+        renderAll();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function toggleFollow(targetId) {
+      if (!requireLogin()) return;
+      const current = getCurrentUser();
+      if (!current || current.id === targetId) return;
+      const users = getUsers();
+      const me = users.find((u) => u.id === current.id);
+      const target = users.find((u) => u.id === targetId);
+      if (!me || !target) return;
+      if (me.blocked.includes(targetId) || target.blocked.includes(me.id)) {
+        alert("You cannot follow because a block exists.");
+        return;
+      }
+      if (me.following.includes(targetId)) {
+        me.following = me.following.filter((id) => id !== targetId);
+        target.followers = target.followers.filter((id) => id !== me.id);
+      } else {
+        me.following.push(targetId);
+        target.followers.push(me.id);
+      }
+      saveUsers(users);
+      renderAll();
+    }
+
+    function toggleBlock(targetId) {
+      if (!requireLogin()) return;
+      const current = getCurrentUser();
+      if (!current || current.id === targetId) return;
+      const users = getUsers();
+      const me = users.find((u) => u.id === current.id);
+      const target = users.find((u) => u.id === targetId);
+      if (!me || !target) return;
+      if (me.blocked.includes(targetId)) {
+        me.blocked = me.blocked.filter((id) => id !== targetId);
+      } else {
+        me.blocked.push(targetId);
+        me.following = me.following.filter((id) => id !== targetId);
+        target.followers = target.followers.filter((id) => id !== me.id);
+        target.following = target.following.filter((id) => id !== me.id);
+        me.followers = me.followers.filter((id) => id !== targetId);
+      }
+      saveUsers(users);
+      renderAll();
+    }
+
+    async function shareProfile(userId) {
+      const link = location.href.split("#")[0] + `#profile/${userId}`;
+      if (navigator.share) {
+        try { await navigator.share({ title: "Loveria profile", url: link }); return; } catch {}
+      }
+      try { await navigator.clipboard.writeText(link); alert("Profile link copied."); }
+      catch { window.prompt("Copy this profile link:", link); }
+    }
+
+    async function shareNovel(novelId) {
+      const novel = getNovelById(novelId);
+      if (!novel) return;
+      const link = location.href.split("#")[0] + `#novel/${novelId}`;
+      if (navigator.share) {
+        try { await navigator.share({ title: `${novel.title} on Loveria`, url: link }); return; } catch {}
+      }
+      try { await navigator.clipboard.writeText(link); alert("Novel link copied."); }
+      catch { window.prompt("Copy this novel link:", link); }
+    }
+
+    function openInbox(otherUserId = null) {
+      if (!requireLogin()) return;
+      activeConversationUserId = otherUserId;
+      renderInbox();
+      inboxDialog.showModal();
+    }
+
+    function renderInbox() {
+      const current = getCurrentUser();
+      if (!current) {
+        inboxContent.innerHTML = `<p class="muted">Log in to see your messages.</p>`;
+        return;
+      }
+
+      const messages = getMessages().slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      const partnerMap = new Map();
+      messages.forEach((m) => {
+        if (m.from === current.id) partnerMap.set(m.to, m);
+        if (m.to === current.id) partnerMap.set(m.from, m);
+      });
+
+      let partnerIds = Array.from(partnerMap.entries())
+        .sort((a, b) => new Date(b[1].createdAt) - new Date(a[1].createdAt))
+        .map(([id]) => id);
+
+      if (activeConversationUserId && !partnerIds.includes(activeConversationUserId)) {
+        partnerIds.unshift(activeConversationUserId);
+      }
+      if (!activeConversationUserId && partnerIds.length) {
+        activeConversationUserId = partnerIds[0];
+      }
+
+      const activeUser = activeConversationUserId ? getUserById(activeConversationUserId) : null;
+
+      const conversationList = partnerIds.map((id) => {
+        const user = getUserById(id);
+        if (!user) return "";
+        const lastMessage = partnerMap.get(id);
+        const preview = lastMessage?.text || "Start chatting";
+        return `
+          <button
+            class="conversation ${id === activeConversationUserId ? "active" : ""}"
+            data-inbox-action="open-conversation"
+            data-id="${escapeHtml(id)}"
+          >
+            <span class="conversation-top">
+              ${avatarHtml(user, "small")}
+              <strong>${escapeHtml(user.name)}</strong>
+              ${blueTickHtml(user)}
+            </span>
+            <span class="conversation-preview">${escapeHtml(preview)}</span>
+          </button>
+        `;
+      }).join("");
+
+      let chatArea = `<p class="muted">Select a conversation.</p>`;
+      if (activeUser) {
+        const blockedByMe = current.blocked.includes(activeUser.id);
+        const blockedByThem = activeUser.blocked.includes(current.id);
+        const blocked = blockedByMe || blockedByThem;
+
+        const threadMessages = messages.filter((m) => {
+          return (m.from === current.id && m.to === activeUser.id) ||
+                 (m.from === activeUser.id && m.to === current.id);
+        });
+
+        const messageHtml = threadMessages.map((m) => {
+          const mine = m.from === current.id;
+          return `<div class="message ${mine ? "me" : "them"}">${escapeHtml(m.text)}</div>`;
+        }).join("");
+
+        chatArea = `
+          <div class="profile-title">
+            ${avatarHtml(activeUser, "small")}
+            <h3 style="margin:0; font-size:20px;">${escapeHtml(activeUser.name)}</h3>
+            ${blueTickHtml(activeUser)}
+          </div>
+          <div id="chatThread" class="chat-thread">
+            ${messageHtml || `<p class="muted">No messages yet. Say hello.</p>`}
+          </div>
+          ${blocked
+            ? `<div class="notice">Messaging is unavailable because one of you has blocked the other.</div>`
+            : `
+              <div class="chat-input-row">
+                <input id="messageInput" placeholder="Write a message" maxlength="1000" />
+                <button class="primary" data-inbox-action="send">Send</button>
+              </div>
+            `
+          }
+        `;
+      }
+
+      inboxContent.innerHTML = `
+        <h3>Messages</h3>
+        <div class="inbox-layout">
+          <aside class="inbox-list">
+            ${conversationList || `<p class="muted">No conversations yet.</p>`}
+            <p class="muted-small">Tip: open a profile and press Message.</p>
+          </aside>
+          <section>${chatArea}</section>
+        </div>
+      `;
+
+      const thread = document.getElementById("chatThread");
+      if (thread) thread.scrollTop = thread.scrollHeight;
+    }
+
+    function sendMessageFromInbox() {
+      const current = getCurrentUser();
+      const activeUser = activeConversationUserId ? getUserById(activeConversationUserId) : null;
+      if (!current || !activeUser) return;
+      const input = document.getElementById("messageInput");
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) return;
+      if (current.blocked.includes(activeUser.id) || activeUser.blocked.includes(current.id)) return;
+
+      const messages = getMessages();
+      messages.push({
+        id: uid(),
+        from: current.id,
+        to: activeUser.id,
+        text,
+        createdAt: new Date().toISOString()
+      });
+      saveMessages(messages);
+      renderInbox();
+    }
+
+    function openNovel(novelId) {
+      const novel = getNovelById(novelId);
+      if (!novel) return;
+      currentNovelId = novelId;
+      renderNovel();
+      try { history.replaceState(null, "", `#novel/${novelId}`); } catch {}
+      novelDialog.showModal();
+    }
+
+    function renderNovel() {
+      const novel = getNovelById(currentNovelId);
+      if (!novel) {
+        novelContent.innerHTML = `<p class="muted">Novel not found.</p>`;
+        return;
+      }
+      const author = getUserById(novel.authorId);
+      const current = getCurrentUser();
+      const liked = current && novel.likes.includes(current.id);
+      const favorited = current && current.favorites.includes(novel.id);
+      const authorName = author?.name || novel.authorName || "Unknown";
+      const chapters = novel.chapters || [];
+
+      const chaptersHtml = chapters.length
+        ? `<div class="chapter-list">
+            ${chapters.map((ch, i) => `
+              <div class="chapter-item">
+                <div>
+                  <strong>${escapeHtml(ch.title || "Untitled chapter")}</strong>
+                  <div class="muted-small">${formatDate(ch.createdAt)}</div>
+                </div>
+                <button class="primary" data-read-action="open-chapter" data-index="${i}">
+                  Read
+                </button>
+              </div>
+            `).join("")}
+          </div>`
+        : `<p class="muted">No chapters yet. The writer is working on it.</p>`;
+
+      novelContent.innerHTML = `
+        <h3>${escapeHtml(novel.title)}</h3>
+        <div class="author">
+          by
+          <button class="link-button" data-novel-action="open-author">
+            ${escapeHtml(authorName)} ${blueTickHtml(author)}
+          </button>
+        </div>
+        <p>${escapeHtml(novel.description || "No description yet.")}</p>
+        <div class="meta">${chapters.length} chapter${chapters.length === 1 ? "" : "s"} · Created ${formatDate(novel.createdAt)}</div>
+
+        <div class="card-actions">
+          <button class="secondary" data-novel-action="like">
+            ${liked ? "❤️ Liked" : "🤍 Like"} · ${novel.likes.length}
+          </button>
+          <button class="secondary" data-novel-action="favorite">
+            ${favorited ? "⭐ Favorited" : "☆ Favorite"}
+          </button>
+          <button class="secondary" data-novel-action="share">Share</button>
+        </div>
+
+        <h3 style="margin-top:16px;">Chapters</h3>
+        ${chaptersHtml}
+      `;
+    }
+
+    function openChapter(novelId, index) {
+      const novel = getNovelById(novelId);
+      if (!novel || !novel.chapters || !novel.chapters[index]) return;
+      currentNovelId = novelId;
+      currentChapterIndex = index;
+      renderChapter();
+      readDialog.showModal();
+    }
+
+    function renderChapter() {
+      const novel = getNovelById(currentNovelId);
+      if (!novel) return;
+      const chapters = novel.chapters || [];
+      const chapter = chapters[currentChapterIndex];
+      if (!chapter) return;
+
+      const hasPrev = currentChapterIndex > 0;
+      const hasNext = currentChapterIndex < chapters.length - 1;
+
+      readContent.innerHTML = `
+        <div class="muted-small">${escapeHtml(novel.title)}</div>
+        <h3>${escapeHtml(chapter.title || "Untitled chapter")}</h3>
+        <div class="reader-content">${escapeHtml(chapter.content)}</div>
+        <div class="reader-nav">
+          <button class="secondary" data-read-action="prev" ${hasPrev ? "" : "disabled"}>
+            ← Previous chapter
+          </button>
+          <span class="muted-small">Chapter ${currentChapterIndex + 1} of ${chapters.length}</span>
+          <button class="primary" data-read-action="next" ${hasNext ? "" : "disabled"}>
+            Next chapter →
+          </button>
+        </div>
+      `;
+    }
+
+    // --- Writing chapters ---
+    function openWriteDialog(prefillNovelId = null) {
+      if (!requireLogin()) return;
+      const myNovels = getNovels().filter((n) => n.authorId === getCurrentUser().id);
+      if (!myNovels.length) {
+        alert("First create a novel by clicking 'Create novel'.");
+        createDialog.showModal();
+        return;
+      }
+
+      writeNovelSelect.innerHTML = myNovels
+        .map((n) => `<option value="${escapeHtml(n.id)}">${escapeHtml(n.title)}</option>`)
+        .join("");
+
+      if (prefillNovelId) {
+        writeNovelSelect.value = prefillNovelId;
+      }
+
+      writeStatus.textContent = "";
+      chapterTitle.value = "";
+      chapterContent.value = "";
+      renderExistingChapters();
+      writeDialog.showModal();
+    }
+
+    function renderExistingChapters() {
+      const novelId = writeNovelSelect.value;
+      const novel = getNovelById(novelId);
+      const chapters = novel?.chapters || [];
+
+      existingChapters.innerHTML = `
+        <h3>Saved chapters (${chapters.length})</h3>
+        <br />
+        ${chapters.length
+          ? `<ol>${chapters.map((c) => `<li>${escapeHtml(c.title || "Untitled chapter")}</li>`).join("")}</ol>`
+          : `<p class="muted">No chapters saved yet. Write your first chapter above.</p>`
+        }
+      `;
+    }
+
+    // Route buttons
+    document.querySelectorAll("[data-route]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        location.hash = btn.dataset.route === "writer" ? "#writer" : "#reader";
+      });
+    });
+
+    // Filter buttons
+    document.querySelectorAll(".filter-button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        currentFilter = btn.dataset.filter;
+        document.querySelectorAll(".filter-button").forEach((b) => {
+          b.classList.toggle("active", b === btn);
+        });
+        renderReader();
+      });
+    });
+
+    searchInput.addEventListener("input", renderReader);
+
+    function handleNovelListClick(event) {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const action = button.dataset.action;
+      const id = button.dataset.id;
+
+      if (action === "like") toggleLike(id);
+      if (action === "favorite") toggleFavorite(id);
+      if (action === "details") openNovel(id);
+      if (action === "delete") deleteNovel(id);
+      if (action === "write-novel") openWriteDialog(id);
+      if (action === "open-profile" && id) openProfile(id);
+    }
+
+    readerNovelList.addEventListener("click", handleNovelListClick);
+    writerNovelList.addEventListener("click", handleNovelListClick);
+
+    authButton.addEventListener("click", () => {
+      const current = getCurrentUser();
+      if (current) openProfile(current.id);
+      else openAuth("login");
+    });
+
+    document.getElementById("open-help").addEventListener("click", () => {
+      helpDialog.showModal();
+    });
+
+    document.getElementById("helpClose").addEventListener("click", () => {
+      helpDialog.close();
+      localStorage.setItem("loveria_help_seen", "1");
+    });
+
+    authSwitch.addEventListener("click", () => {
+      setAuthMode(authMode === "login" ? "signup" : "login");
+    });
+
+    document.querySelectorAll(".demo-fill").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setAuthMode("login");
+        authIdentifier.value = btn.dataset.identifier;
+        authPassword.value = btn.dataset.password;
+        authError.textContent = "";
+      });
+    });
+
+    authForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const name = authName.value.trim();
+      const identifier = authIdentifier.value.trim();
+      const password = authPassword.value;
+      authError.textContent = "";
+
+      if (!isValidIdentifier(identifier)) {
+        authError.textContent = "Please enter a valid email address or phone number.";
+        return;
+      }
+
+      const users = getUsers();
+      const normalized = normalizeIdentifier(identifier);
+
+      if (authMode === "login") {
+        const user = users.find((u) => u.identifier === normalized);
+        if (!user || user.password !== password) {
+          authError.textContent = "Invalid login details.";
+          return;
+        }
+        setSession(user.id);
+        authDialog.close();
+        authForm.reset();
+        renderAll();
+        return;
+      }
+
+      if (!name) { authError.textContent = "Please enter your name."; return; }
+      if (password.length < 6) { authError.textContent = "Password must be at least 6 characters."; return; }
+      if (users.some((u) => u.identifier === normalized)) {
+        authError.textContent = "An account with that email or number already exists.";
+        return;
+      }
+
+      const id = uid();
+      const newUser = {
+        id, identifier: normalized, name, password,
+        avatar: "", bio: "", verified: false,
+        followers: [], following: [], blocked: [], favorites: [],
+        createdAt: new Date().toISOString()
+      };
+
+      const official = users.find((u) => u.id === "u-official");
+      if (official) {
+        newUser.following.push(official.id);
+        official.followers.push(id);
+      }
+
+      users.push(newUser);
+      saveUsers(users);
+
+      if (official) {
+        const messages = getMessages();
+        messages.push({
+          id: uid(), from: official.id, to: id,
+          text: "Welcome to Loveria! Complete your profile, create your first novel, and start writing.",
+          createdAt: new Date().toISOString()
+        });
+        saveMessages(messages);
+      }
+
+      setSession(id);
+      authDialog.close();
+      authForm.reset();
+      renderAll();
+      setTimeout(() => openProfile(id), 60);
+    });
+
+    createNovelButton.addEventListener("click", () => {
+      if (!requireLogin()) return;
+      createForm.reset();
+      createDialog.showModal();
+    });
+
+    createForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!requireLogin()) return;
+      const current = getCurrentUser();
+      const title = document.getElementById("novelTitle").value.trim();
+      const description = document.getElementById("novelDescription").value.trim();
+      if (!title) return;
+
+      const novels = getNovels();
+      const newNovel = {
+        id: uid(),
+        title,
+        authorId: current.id,
+        authorName: current.name,
+        description,
+        likes: [],
+        chapters: [],
+        createdAt: new Date().toISOString()
+      };
+      novels.unshift(newNovel);
+      saveNovels(novels);
+      createDialog.close();
+      renderAll();
+
+      // Auto-open writer for new novel
+      setTimeout(() => openWriteDialog(newNovel.id), 100);
+    });
+
+    writeNowButton.addEventListener("click", () => openWriteDialog());
+
+    writeNovelSelect.addEventListener("change", renderExistingChapters);
+
+    saveChapterButton.addEventListener("click", () => {
+      const current = getCurrentUser();
+      if (!current) return;
+
+      const novelId = writeNovelSelect.value;
+      if (!novelId) {
+        writeStatus.textContent = "Please create a novel first.";
+        return;
+      }
+
+      const novels = getNovels();
+      const novel = novels.find((n) => n.id === novelId);
+      if (!novel) { writeStatus.textContent = "Novel not found."; return; }
+      if (novel.authorId !== current.id) {
+        writeStatus.textContent = "You can only write your own novels.";
+        return;
+      }
+
+      const content = chapterContent.value.trim();
+      if (!content) {
+        writeStatus.textContent = "Please write something before saving.";
+        return;
+      }
+
+      const chapterNumber = (novel.chapters?.length || 0) + 1;
+      const title = chapterTitle.value.trim() || `Chapter ${chapterNumber}`;
+
+      novel.chapters = novel.chapters || [];
+      novel.chapters.push({
+        id: uid(),
+        title,
+        content,
+        createdAt: new Date().toISOString()
+      });
+
+      saveNovels(novels);
+      writeStatus.textContent = `✅ Saved "${title}". Keep writing!`;
+      chapterTitle.value = "";
+      chapterContent.value = "";
+      renderExistingChapters();
+      renderAll();
+    });
+
+    profileContent.addEventListener("change", (event) => {
+      if (event.target.id === "profileAvatarInput") {
+        handleAvatarUpload(event.target);
+      }
+    });
+
+    profileContent.addEventListener("click", (event) => {
+      const novelButton = event.target.closest("[data-novel-action]");
+      if (novelButton) {
+        openNovel(novelButton.dataset.id);
+        return;
+      }
+
+      const button = event.target.closest("[data-profile-action]");
+      if (!button) return;
+      const action = button.dataset.profileAction;
+      const user = getUserById(profileUserId);
+      if (!user) return;
+
+      if (action === "logout") { logout(); profileDialog.close(); renderAll(); }
+      if (action === "share") shareProfile(user.id);
+      if (action === "verify") { updateUser(user.id, { verified: true }); renderAll(); }
+      if (action === "save") {
+        const nameInput = document.getElementById("profileName");
+        const bioInput = document.getElementById("profileBio");
+        const name = nameInput.value.trim();
+        const bio = bioInput.value.trim();
+        if (!name) { alert("Please enter a name."); return; }
+        updateUser(user.id, { name, bio });
+        renderAll();
+      }
+      if (action === "follow") toggleFollow(user.id);
+      if (action === "message") { profileDialog.close(); openInbox(user.id); }
+      if (action === "block") toggleBlock(user.id);
+    });
+
+    inboxContent.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-inbox-action]");
+      if (!button) return;
+      if (button.dataset.inboxAction === "open-conversation") {
+        activeConversationUserId = button.dataset.id;
+        renderInbox();
+      }
+      if (button.dataset.inboxAction === "send") sendMessageFromInbox();
+    });
+
+    inboxContent.addEventListener("keydown", (event) => {
+      if (event.target.id === "messageInput" && event.key === "Enter") {
+        event.preventDefault();
+        sendMessageFromInbox();
+      }
+    });
+
+    novelContent.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+
+      if (button.dataset.readAction === "open-chapter") {
+        openChapter(currentNovelId, parseInt(button.dataset.index, 10));
+        return;
+      }
+
+      if (button.dataset.novelAction) {
+        const action = button.dataset.novelAction;
+        const novel = getNovelById(currentNovelId);
+        if (!novel) return;
+        if (action === "like") toggleLike(novel.id);
+        if (action === "favorite") toggleFavorite(novel.id);
+        if (action === "share") shareNovel(novel.id);
+        if (action === "open-author") {
+          if (!novel.authorId) return;
+          novelDialog.close();
+          openProfile(novel.authorId);
+        }
+      }
+    });
+
+    readContent.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-read-action]");
+      if (!button) return;
+      const action = button.dataset.readAction;
+      if (action === "prev" && currentChapterIndex > 0) {
+        currentChapterIndex--;
+        renderChapter();
+      }
+      if (action === "next") {
+        const novel = getNovelById(currentNovelId);
+        if (novel && currentChapterIndex < (novel.chapters?.length || 0) - 1) {
+          currentChapterIndex++;
+          renderChapter();
+        }
+      }
+    });
+
+    document.querySelectorAll("[data-close]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const dialog = document.getElementById(btn.dataset.close);
+        if (dialog) dialog.close();
+      });
+    });
+
+    profileDialog.addEventListener("close", () => {
+      if (location.hash.startsWith("#profile")) clearHash();
+    });
+
+    novelDialog.addEventListener("close", () => {
+      if (location.hash.startsWith("#novel")) clearHash();
+    });
+
+    window.addEventListener("hashchange", handleHash);
+
+    seedData();
+    renderAll();
+    handleHash();
+
+    if (!localStorage.getItem("loveria_help_seen") && !location.hash) {
+      setTimeout(() => {
+        helpDialog.showModal();
+        localStorage.setItem("loveria_help_seen", "1");
+      }, 350);
+    }
+  </script>
+
+  <!-- MUSIC -->
+  <script>
+    (() => {
+      const musicToggle = document.getElementById("musicToggle");
+      if (!musicToggle) return;
+
+      let audioContext = null;
+      let masterGain = null;
+      let padOscillators = [];
+      let sequenceTimer = null;
+      let isPlaying = false;
+      let isStarting = false;
+
+      const melodyNotes = [220.00, 261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33];
+      const lowNotes = [110.00, 130.81, 146.83, 164.81];
+
+      function randomItem(array) {
+        return array[Math.floor(Math.random() * array.length)];
+      }
+
+      function playNote(frequency, time, duration = 2.6, type = "sine", volume = 0.07) {
+        if (!audioContext || !masterGain) return;
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, time);
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(volume, time + 0.25);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+        oscillator.connect(gain);
+        gain.connect(masterGain);
+        oscillator.start(time);
+        oscillator.stop(time + duration + 0.1);
+      }
+
+      function scheduleBar() {
+        if (!audioContext) return;
+        const now = audioContext.currentTime + 0.05;
+        const noteCount = 2 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < noteCount; i++) {
+          const offset = i * 0.42 + Math.random() * 0.12;
+          const note = randomItem(melodyNotes);
+          const duration = 2.2 + Math.random() * 2.4;
+          const type = Math.random() < 0.75 ? "sine" : "triangle";
+          const volume = 0.035 + Math.random() * 0.035;
+          playNote(note, now + offset, duration, type, volume);
+        }
+        if (Math.random() < 0.35) {
+          const bassNote = randomItem(lowNotes);
+          playNote(bassNote, now, 6.5, "sine", 0.03);
+        }
+      }
+
+      function startPad() {
+        if (!audioContext || !masterGain) return;
+        const padGain = audioContext.createGain();
+        padGain.gain.value = 0;
+        padGain.connect(masterGain);
+        const frequencies = [110.00, 164.81, 220.00];
+        frequencies.forEach((frequency) => {
+          const oscillator = audioContext.createOscillator();
+          const oscillatorGain = audioContext.createGain();
+          oscillator.type = "sine";
+          oscillator.frequency.value = frequency;
+          oscillatorGain.gain.value = 0.014;
+          oscillator.connect(oscillatorGain);
+          oscillatorGain.connect(padGain);
+          oscillator.start();
+          padOscillators.push(oscillator);
+        });
+        const lfo = audioContext.createOscillator();
+        const lfoGain = audioContext.createGain();
+        lfo.type = "sine";
+        lfo.frequency.value = 0.08;
+        lfoGain.gain.value = 0.015;
+        lfo.connect(lfoGain);
+        lfoGain.connect(padGain.gain);
+        lfo.start();
+        padOscillators.push(lfo);
+        padGain.gain.linearRampToValueAtTime(0.08, audioContext.currentTime + 3);
+      }
+
+      async function startMusic() {
+        if (isPlaying || isStarting) return;
+        isStarting = true;
+        try {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          await audioContext.resume();
+          masterGain = audioContext.createGain();
+          masterGain.gain.value = 0;
+          masterGain.connect(audioContext.destination);
+          const delay = audioContext.createDelay(1.0);
+          delay.delayTime.value = 0.36;
+          const feedback = audioContext.createGain();
+          feedback.gain.value = 0.34;
+          const delayOut = audioContext.createGain();
+          delayOut.gain.value = 0.18;
+          masterGain.connect(delay);
+          delay.connect(feedback);
+          feedback.connect(delay);
+          delay.connect(delayOut);
+          delayOut.connect(audioContext.destination);
+          masterGain.gain.linearRampToValueAtTime(0.24, audioContext.currentTime + 1.5);
+          startPad();
+          scheduleBar();
+          sequenceTimer = setInterval(scheduleBar, 1900);
+          isPlaying = true;
+          musicToggle.textContent = "🎵 Music: On";
+          musicToggle.classList.add("active");
+          musicToggle.setAttribute("aria-pressed", "true");
+        } catch (error) {
+          console.error("Music could not start:", error);
+        } finally {
+          isStarting = false;
+        }
+      }
+
+      function stopMusic() {
+        if (!isPlaying) return;
+        clearInterval(sequenceTimer);
+        sequenceTimer = null;
+        if (audioContext && masterGain) {
+          masterGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.08);
+        }
+        setTimeout(() => {
+          padOscillators.forEach((node) => {
+            try { node.stop(); } catch {}
+          });
+          padOscillators = [];
+          if (audioContext) {
+            audioContext.close().catch(() => {});
+            audioContext = null;
+          }
+          masterGain = null;
+        }, 250);
+        isPlaying = false;
+        musicToggle.textContent = "🎵 Music: Off";
+        musicToggle.classList.remove("active");
+        musicToggle.setAttribute("aria-pressed", "false");
+      }
+
+      musicToggle.addEventListener("click", () => {
+        if (isPlaying) stopMusic();
+        else startMusic();
+      });
+    })();
+  </script>
+</body>
+</html>
